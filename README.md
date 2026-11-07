@@ -8,6 +8,7 @@ The Multiplayer Leaderboard Mod adds an in-game leaderboard to Beat Saber multip
 - **Rankings:** Displays each player's current position on the leaderboard.
 - **Live Scores:** Shows each player's score and updates as they play.
 - **Accuracy:** Displays each player's accuracy percentage.
+- **Combo/Mistakes:** Displays what combo they're holding and how many mistakes they made during the song
 - **World-Space Display:** The leaderboard stays in a fixed position in the game world instead of following your headset when you look around.
 - **Custom Positioning:** Move the leaderboard to a position that works best for you.
 - **Appearance Settings:** Adjust the overall size, text size, spacing, and background dimensions.
