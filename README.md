@@ -2,6 +2,14 @@
 
 The Multiplayer Leaderboard Mod adds an in-game leaderboard to Beat Saber multiplayer. It lets you keep track of how everyone is performing without needing to check scores separately.
 
+## First-Time Setup
+
+When you install the mod for the first time, the leaderboard may initially appear inside the floor or in an inconvenient position. This is normal.
+
+Simply open the Multiplayer Leaderboard settings and adjust its position, rotation, and size until it's where you want it. Everyone can customize the placement to their own liking.
+
+Once you've set it up, make sure to look for the save button and save settings! It will be saved so you won't have to reposition it every time you launch the game.
+
 ## Features
 
 - **Player Names:** Shows the names of players in the lobby.
