@@ -12,7 +12,7 @@ The Multiplayer Leaderboard Mod adds an in-game leaderboard to Beat Saber multip
 - **World-Space Display:** The leaderboard stays in a fixed position in the game world instead of following your headset when you look around.
 - **Custom Positioning:** Move the leaderboard to a position that works best for you.
 - **Appearance Settings:** Adjust the overall size, text size, spacing, and background dimensions.
-- **Saved Settings:** Your positioning and appearance preferences are saved so you don't have to set them up again every time you launch the game.
+- **Saved Settings:** Your positioning and appearance preferences Whenever you adjust them make sure you save them by pressing the save button so then they save
 - **Test Mode:** Allows you to display the leaderboard outside multiplayer for positioning and appearance adjustments.
 
 ## How It Works
@@ -22,6 +22,13 @@ Once you're in a multiplayer session, the leaderboard displays the players along
 As players earn points throughout the song, the leaderboard updates to reflect their performance. Players are arranged according to their scores, making it easy to see who's currently in the lead.
 
 The leaderboard uses the available gameplay and multiplayer information from Beat Saber to display player statistics.
+
+## Spectator Mode
+<img width="880" height="533" alt="Screenshot 2026-11-06 220454" src="https://github.com/user-attachments/assets/7f32f4a0-2272-47f4-ba8e-6a874a2f0083" />
+
+The leaderboard can also be displayed directly on the in-game spectator platform. This allows you to view the same player information while spectating someone else's gameplay.
+
+It automatically appears when you start spectating and disappears when you return to the multiplayer lobby.
 
 ## Customization
 
