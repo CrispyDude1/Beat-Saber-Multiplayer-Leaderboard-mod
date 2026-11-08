@@ -113,6 +113,7 @@ namespace MultiplayerLeaderboard
         private float _nextNativeSpectatorInfoScan;
         private float _nextSpectatorScan;
         private float _nextSpectatorBarCheck;
+        private float _nextSpectatorPose;
         private bool _spectatorPositionedFromNativeBar;
         private bool _spectatorOffsetDirty;
         private float _spectatorOffsetSaveAt;
@@ -2055,19 +2056,19 @@ namespace MultiplayerLeaderboard
 
                 if (_spectatorPicker == null)
                 {
-                    _spectatorPicker = FindObjectOfType<MultiplayerSpectatingSpotPickerViewController>();
+                    _spectatorPicker = FirstOf<MultiplayerSpectatingSpotPickerViewController>();
                 }
 
                 if (_spectatorController == null)
                 {
-                    _spectatorController = FindObjectOfType<MultiplayerSpectatorController>();
+                    _spectatorController = FirstOf<MultiplayerSpectatorController>();
                 }
 
                 // The inactive-player menu owns the native spectator bar. It is the placement
                 // reference for our panel, so resolve it together with the picker.
                 if (_spectatorMenu == null)
                 {
-                    _spectatorMenu = FindObjectOfType<MultiplayerLocalInactivePlayerInGameMenuViewController>();
+                    _spectatorMenu = FirstOf<MultiplayerLocalInactivePlayerInGameMenuViewController>();
                 }
             }
             catch (Exception ex)
@@ -2244,12 +2245,13 @@ namespace MultiplayerLeaderboard
                 }
 
                 ResetNativeSpectatorInfoScan();
-                _panel.AttachTo(anchor);
+                _panel.DetachFromAnchor();
                 _spectatorAnchor = anchor;
                 _spectatorSpot = spot;
                 _spectatorPositionedFromNativeBar = false;
                 _nextSpectatorBarCheck = 0f;
                 _spectatorBarChecks = 0;
+                _nextSpectatorPose = now + SpectatorUiRefreshInterval;
                 PositionSpectatorPanel(anchor, true);
 
                 LeaderboardLog.Info("Spectator leaderboard attached to the selected player's platform" +
@@ -2269,6 +2271,11 @@ namespace MultiplayerLeaderboard
                 {
                     PositionSpectatorPanel(anchor, true);
                 }
+            }
+            else if (_spectatorPositionedFromNativeBar && now >= _nextSpectatorPose)
+            {
+                _nextSpectatorPose = now + SpectatorUiRefreshInterval;
+                PositionSpectatorPanel(anchor, false);
             }
 
             _panel.SetVisible(true);
@@ -2423,8 +2430,14 @@ namespace MultiplayerLeaderboard
             Vector3 offset = _uiSettings != null && _uiSettings.HasSpectatorOffset
                 ? _uiSettings.SpectatorOffset
                 : Vector3.zero;
-            _panel.SetWorldPose(_spectatorBasePosition + _spectatorBaseRotation * offset,
-                                _spectatorBaseRotation);
+            Vector3 position = _spectatorBasePosition + _spectatorBaseRotation * offset;
+            if ((_panel.WorldPosition - position).sqrMagnitude < 0.0001f &&
+                Quaternion.Angle(_panel.WorldRotation, _spectatorBaseRotation) < 0.25f)
+            {
+                return;
+            }
+
+            _panel.SetWorldPose(position, _spectatorBaseRotation);
         }
 
         private void HideNativeSpectatorInfo(Transform anchor)
@@ -2463,7 +2476,7 @@ namespace MultiplayerLeaderboard
 
                 if (facade == null)
                 {
-                    facade = FindObjectOfType<MultiplayerLocalInactivePlayerFacade>();
+                    facade = FirstOf<MultiplayerLocalInactivePlayerFacade>();
                 }
 
                 if (facade != null)
@@ -2676,7 +2689,14 @@ namespace MultiplayerLeaderboard
             _spectatorPositionedFromNativeBar = false;
             _spectatorBarChecks = 0;
             _nextSpectatorBarCheck = 0f;
+            _nextSpectatorPose = 0f;
             ResetNativeSpectatorInfoScan();
+        }
+
+        private static T FirstOf<T>() where T : UnityEngine.Object
+        {
+            T[] found = SceneObjects.Find<T>();
+            return found != null && found.Length > 0 ? found[0] : null;
         }
 
         private void PruneRowCache(List<PlayerRow> rows)
