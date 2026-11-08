@@ -1,3 +1,5 @@
+CRISPY, FOR THE LOVE OF GOD, ADD A GITIGNORE. PLEASE!
+
 The Multiplayer Leaderboard Mod adds an in-game leaderboard to Beat Saber multiplayer. It lets you keep track of how everyone is performing without needing to check scores separately.
 
 ## Features
