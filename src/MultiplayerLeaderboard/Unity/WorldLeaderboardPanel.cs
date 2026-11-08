@@ -345,6 +345,9 @@ namespace MultiplayerLeaderboard.Unity
             _canvas.renderMode = RenderMode.WorldSpace;
             _canvas.overrideSorting = true;
             _canvas.sortingOrder = 32760;
+            _canvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1 |
+                                               AdditionalCanvasShaderChannels.Normal |
+                                               AdditionalCanvasShaderChannels.Tangent;
 
             // The in-game panel is display-only. Its VR raycaster and pointer handlers are added only
             // by EnterEditMode/EnterTestEditing; keeping them active while playing made the game's
@@ -545,6 +548,9 @@ namespace MultiplayerLeaderboard.Unity
             rowCanvas.renderMode = RenderMode.WorldSpace;
             rowCanvas.overrideSorting = true;
             rowCanvas.sortingOrder = 32761;
+            rowCanvas.additionalShaderChannels = AdditionalCanvasShaderChannels.TexCoord1 |
+                                                 AdditionalCanvasShaderChannels.Normal |
+                                                 AdditionalCanvasShaderChannels.Tangent;
             rowCanvas.worldCamera = _canvas != null ? _canvas.worldCamera : null;
             row.Canvas = rowCanvas;
             _rowCanvasCount++;
@@ -663,6 +669,11 @@ namespace MultiplayerLeaderboard.Unity
         /// frame. The runtime must keep calling Render while this is false even when the data hash
         /// has not changed, otherwise the remaining rows would never be created.
         /// </summary>
+        internal bool RowExists(int index)
+        {
+            return _rows != null && index >= 0 && index < _rows.Length && _rows[index] != null;
+        }
+
         internal bool HasAllRows(int count)
         {
             if (_rows == null || count <= 0)
@@ -727,12 +738,47 @@ namespace MultiplayerLeaderboard.Unity
             }
         }
 
-        internal void Render(IReadOnlyList<PlayerRow> rows, string footerOverride = null)
+        internal void Render(IReadOnlyList<PlayerRow> rows, string footerOverride = null, int onlyIndex = -1)
         {
             EnsureFonts();
 
             int count = rows == null ? 0 : Math.Min(rows.Count, MaxRows);
             float now = Time.unscaledTime;
+            if (onlyIndex >= 0)
+            {
+                TrackRankChanges(rows, count, now);
+                int ignoredChanges = 0;
+                int ignoredRows = 0;
+                if (onlyIndex < count && _rows != null)
+                {
+                    if (_rows[onlyIndex] == null)
+                    {
+                        EnsureRow(onlyIndex);
+                        if (!SetVisibleCount(count))
+                        {
+                            ApplyLayout();
+                        }
+                    }
+
+                    Row row = _rows[onlyIndex];
+                    if (row != null)
+                    {
+                        if (!row.Root.activeSelf)
+                        {
+                            row.Root.SetActive(true);
+                        }
+
+                        ApplyRow(row, rows[onlyIndex], now, ref ignoredChanges, ref ignoredRows);
+                    }
+                }
+
+                Set(_footer, footerOverride ?? (_preview
+                    ? "PREVIEW DATA - not a live multiplayer session"
+                    : BuildFooter(rows, count)));
+
+                return;
+            }
+
             TrackRankChanges(rows, count, now);
             bool rowsCreated = EnsureRows(count);
             bool layoutChanged = SetVisibleCount(count);
@@ -771,56 +817,7 @@ namespace MultiplayerLeaderboard.Unity
                     continue;
                 }
 
-                PlayerRow data = rows[i];
-                bool rowChanged = false;
-                if (Set(row.Rank, data.RankText))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                if (Set(row.Name, data.DisplayName))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                if (Set(row.Accuracy, data.AccuracyText))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                if (Set(row.Score, data.ScoreText))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                if (Set(row.Combo, data.ComboText))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                if (Set(row.Mistakes, data.MistakesText))
-                {
-                    textChanges++;
-                    rowChanged = true;
-                }
-
-                rowChanged |= SetColor(row.Rank, Tint(RankColor(data.Rank)));
-                rowChanged |= SetColor(row.Name, NameColorFor(data, now));
-                rowChanged |= SetColor(row.Accuracy, Tint(data.IsFailed ? FailedColor : AccuracyColor));
-                rowChanged |= SetColor(row.Score, Tint(data.IsFailed
-                    ? FailedColor
-                    : (data.IsMe ? LocalColor : ScoreColor)));
-                rowChanged |= SetColor(row.Combo, Tint(data.IsFailed ? FailedColor : ComboColor));
-                rowChanged |= SetColor(row.Mistakes, Tint(data.Mistakes > 0 ? MistakeColor : ColumnColor));
-                if (rowChanged)
-                {
-                    changedRows++;
-                }
+                ApplyRow(row, rows[i], now, ref textChanges, ref changedRows);
             }
 
             if (Set(_footer, footerOverride ?? (_preview
@@ -832,6 +829,59 @@ namespace MultiplayerLeaderboard.Unity
 
             LogTopologyOnce();
             PerformanceDiagnostics.RecordUiChanges(textChanges, layoutChanged, changedRows);
+        }
+
+        private void ApplyRow(Row row, PlayerRow data, float now, ref int textChanges, ref int changedRows)
+        {
+            bool rowChanged = false;
+            if (Set(row.Rank, data.RankText))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            if (Set(row.Name, data.DisplayName))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            if (Set(row.Accuracy, data.AccuracyText))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            if (Set(row.Score, data.ScoreText))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            if (Set(row.Combo, data.ComboText))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            if (Set(row.Mistakes, data.MistakesText))
+            {
+                textChanges++;
+                rowChanged = true;
+            }
+
+            rowChanged |= SetColor(row.Rank, Tint(RankColor(data.Rank)));
+            rowChanged |= SetColor(row.Name, NameColorFor(data, now));
+            rowChanged |= SetColor(row.Accuracy, Tint(data.IsFailed ? FailedColor : AccuracyColor));
+            rowChanged |= SetColor(row.Score, Tint(data.IsFailed
+                ? FailedColor
+                : (data.IsMe ? LocalColor : ScoreColor)));
+            rowChanged |= SetColor(row.Combo, Tint(data.IsFailed ? FailedColor : ComboColor));
+            rowChanged |= SetColor(row.Mistakes, Tint(data.Mistakes > 0 ? MistakeColor : ColumnColor));
+            if (rowChanged)
+            {
+                changedRows++;
+            }
         }
 
         internal void SetPerformanceLogging(bool enabled)
@@ -874,17 +924,24 @@ namespace MultiplayerLeaderboard.Unity
         private void ApplyRootScale()
         {
             float desiredScale = PixelScale * _overallScale;
+            Vector3 scale;
             if (_platformAttached && _root.transform.parent != null)
             {
                 Vector3 parentScale = _root.transform.parent.lossyScale;
-                _root.transform.localScale = new Vector3(
+                scale = new Vector3(
                     Mathf.Abs(parentScale.x) > 0.0001f ? desiredScale / parentScale.x : desiredScale,
                     Mathf.Abs(parentScale.y) > 0.0001f ? desiredScale / parentScale.y : desiredScale,
                     Mathf.Abs(parentScale.z) > 0.0001f ? desiredScale / parentScale.z : desiredScale);
             }
             else
             {
-                _root.transform.localScale = Vector3.one * desiredScale;
+                scale = new Vector3(desiredScale, desiredScale, desiredScale);
+            }
+
+            Vector3 current = _root.transform.localScale;
+            if (current.x != scale.x || current.y != scale.y || current.z != scale.z)
+            {
+                _root.transform.localScale = scale;
             }
         }
 
@@ -934,7 +991,10 @@ namespace MultiplayerLeaderboard.Unity
                 mistakesX = cursor;
             }
 
-            _rect.sizeDelta = new Vector2(width, _height);
+            if (_rect.sizeDelta.x != width || _rect.sizeDelta.y != _height)
+            {
+                _rect.sizeDelta = new Vector2(width, _height);
+            }
 
             ApplyRootScale();
 
@@ -1077,7 +1137,7 @@ namespace MultiplayerLeaderboard.Unity
 
         private static void SetFont(TextMeshProUGUI text, float size)
         {
-            if (text != null)
+            if (text != null && text.fontSize != size)
             {
                 text.fontSize = size;
             }
@@ -1112,6 +1172,7 @@ namespace MultiplayerLeaderboard.Unity
             // enabling it first is what produced the white fallback quad in this build.
             image.enabled = false;
             image.raycastTarget = false;
+            image.maskable = false;
             image.type = Image.Type.Simple;
             image.color = BackgroundColor;
             image.sprite = _backdropSprite;
@@ -1273,89 +1334,64 @@ namespace MultiplayerLeaderboard.Unity
                 return 0;
             }
 
-            Canvas canvas = NextPendingCanvas();
-            if (canvas == null)
-            {
-                return 0;
-            }
-
-            int applied = 0;
-            for (int i = _pendingText.Count - 1; i >= 0; i--)
-            {
-                PendingText change = _pendingText[i];
-                if (change.Label == null)
-                {
-                    _pendingText.RemoveAt(i);
-                    continue;
-                }
-
-                if (change.Label.canvas != canvas)
-                {
-                    continue;
-                }
-
-                _pendingText.RemoveAt(i);
-                if (!string.Equals(change.Label.text, change.Value, StringComparison.Ordinal))
-                {
-                    change.Label.text = change.Value;
-                    applied++;
-                }
-            }
-
-            for (int i = _pendingColor.Count - 1; i >= 0; i--)
-            {
-                PendingColor change = _pendingColor[i];
-                if (change.Label == null)
-                {
-                    _pendingColor.RemoveAt(i);
-                    continue;
-                }
-
-                if (change.Label.canvas != canvas)
-                {
-                    continue;
-                }
-
-                _pendingColor.RemoveAt(i);
-                if (change.Label.color != change.Value)
-                {
-                    change.Label.color = change.Value;
-                    applied++;
-                }
-            }
-
-            return applied;
-        }
-
-        private Canvas NextPendingCanvas()
-        {
             while (_pendingText.Count > 0)
             {
                 int index = _pendingText.Count - 1;
-                TextMeshProUGUI label = _pendingText[index].Label;
-                if (label == null || label.canvas == null)
+                PendingText change = _pendingText[index];
+                _pendingText.RemoveAt(index);
+                if (change.Label == null)
                 {
-                    _pendingText.RemoveAt(index);
                     continue;
                 }
 
-                return label.canvas;
+                if (!string.Equals(change.Label.text, change.Value, StringComparison.Ordinal))
+                {
+                    change.Label.text = change.Value;
+                }
+
+                ApplyPendingColor(change.Label);
+                return 1;
             }
 
             while (_pendingColor.Count > 0)
             {
                 int index = _pendingColor.Count - 1;
-                TextMeshProUGUI label = _pendingColor[index].Label;
-                if (label == null || label.canvas == null)
+                PendingColor change = _pendingColor[index];
+                _pendingColor.RemoveAt(index);
+                if (change.Label == null)
                 {
-                    _pendingColor.RemoveAt(index);
                     continue;
                 }
 
-                return label.canvas;
+                if (change.Label.color != change.Value)
+                {
+                    change.Label.color = change.Value;
+                }
+
+                return 1;
             }
 
-            return null;
+            return 0;
+        }
+
+        private void ApplyPendingColor(TextMeshProUGUI label)
+        {
+            for (int i = _pendingColor.Count - 1; i >= 0; i--)
+            {
+                if (!ReferenceEquals(_pendingColor[i].Label, label))
+                {
+                    continue;
+                }
+
+                PendingColor change = _pendingColor[i];
+                _pendingColor.RemoveAt(i);
+                if (label.color != change.Value)
+                {
+                    label.color = change.Value;
+                }
+
+                return;
+            }
         }
 
         private bool SetColor(TextMeshProUGUI label, Color value)
@@ -1464,6 +1500,10 @@ namespace MultiplayerLeaderboard.Unity
 
             TextMeshProUGUI text = textObject.AddComponent<TextMeshProUGUI>();
             text.raycastTarget = false;
+            text.maskable = false;
+            text.parseCtrlCharacters = false;
+            text.extraPadding = false;
+            text.isTextObjectScaleStatic = true;
             text.enableWordWrapping = false;
             text.overflowMode = TextOverflowModes.Ellipsis;
             text.alignment = alignment;
@@ -1690,11 +1730,31 @@ namespace MultiplayerLeaderboard.Unity
 
         private static void Place(RectTransform rect, float x, float y, float width, float height)
         {
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(0f, 1f);
-            rect.pivot = new Vector2(0f, 1f);
-            rect.anchoredPosition = new Vector2(x, -y);
-            rect.sizeDelta = new Vector2(width, height);
+            if (rect.anchorMin.x != 0f || rect.anchorMin.y != 1f)
+            {
+                rect.anchorMin = new Vector2(0f, 1f);
+            }
+
+            if (rect.anchorMax.x != 0f || rect.anchorMax.y != 1f)
+            {
+                rect.anchorMax = new Vector2(0f, 1f);
+            }
+
+            if (rect.pivot.x != 0f || rect.pivot.y != 1f)
+            {
+                rect.pivot = new Vector2(0f, 1f);
+            }
+
+            float yPos = -y;
+            if (rect.anchoredPosition.x != x || rect.anchoredPosition.y != yPos)
+            {
+                rect.anchoredPosition = new Vector2(x, yPos);
+            }
+
+            if (rect.sizeDelta.x != width || rect.sizeDelta.y != height)
+            {
+                rect.sizeDelta = new Vector2(width, height);
+            }
         }
 
         internal static VRGraphicRaycaster AddVrRaycaster(Canvas canvas, string label)

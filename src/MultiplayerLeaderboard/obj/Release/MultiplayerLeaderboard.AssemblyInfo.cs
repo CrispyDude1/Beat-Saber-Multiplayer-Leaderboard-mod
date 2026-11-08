@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("World-space multiplayer leaderboard (rank, name, accuracy, score) for Beat Saber.")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.4.1.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.4.1+c67c3dd6c9dddae0e70376445f168bc3acb84de1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.4.1+3e2186e892cebb8e6a7111cc8d8b2fcea78e72a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("Multiplayer Leaderboard")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MultiplayerLeaderboard")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.4.1.0")]

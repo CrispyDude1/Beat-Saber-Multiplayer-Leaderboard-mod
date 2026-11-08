@@ -101,6 +101,7 @@ namespace MultiplayerLeaderboard
         private RectTransform _spectatorBar;
         private IMultiplayerSpectatingSpot _spectatorSpot;
         private Transform _spectatorAnchor;
+        private int _spectatorAnchorId;
         private Vector3 _spectatorHomePosition;
         private Quaternion _spectatorHomeRotation = Quaternion.identity;
         private Vector3 _spectatorBasePosition;
@@ -113,7 +114,9 @@ namespace MultiplayerLeaderboard
         private float _nextNativeSpectatorInfoScan;
         private float _nextSpectatorScan;
         private float _nextSpectatorBarCheck;
-        private float _nextSpectatorPose;
+        private int _rowCursor;
+        private int _rowsLeftInPass;
+        private long _passSignature;
         private bool _spectatorPositionedFromNativeBar;
         private bool _spectatorOffsetDirty;
         private float _spectatorOffsetSaveAt;
@@ -209,11 +212,13 @@ namespace MultiplayerLeaderboard
             PerformanceDiagnostics.Frame();
 
             // queue stuff to do ONE thing per frame, apperently this used to slam it all in one frame.
+            bool appliedUi = false;
             if (_panel != null && _panel.IsAlive)
             {
                 int applied = _panel.FlushUi();
                 if (applied > 0)
                 {
+                    appliedUi = true;
                     PerformanceDiagnostics.RecordUiApply(applied);
                 }
             }
@@ -236,6 +241,11 @@ namespace MultiplayerLeaderboard
                 {
                     PerformanceDiagnostics.BeginManual("local baseline (F9, no panel)");
                 }
+            }
+
+            if (appliedUi)
+            {
+                return;
             }
 
             float now = Time.unscaledTime;
@@ -353,6 +363,9 @@ namespace MultiplayerLeaderboard
                     _localScoreFallbackScans = 0;
                     _rowCache.Clear();
                     _rowBuffer.Clear();
+                    _rowCursor = 0;
+                    _rowsLeftInPass = 0;
+                    _passSignature = 0L;
                     ScoreReader.BeginSong();
                     if (_mistakes != null)
                     {
@@ -1908,34 +1921,79 @@ namespace MultiplayerLeaderboard
             if (_panel != null)
             {
                 string spectatorFooter = UpdateSpectatorView(now);
-                long signature = ComputeRenderSignature(_rowBuffer, spectatorFooter);
-                bool rankFlashActive = _panel.HasActiveRankFlash(now);
-                if (rankFlashActive)
-                {
-                    _rankFlashWasActive = true;
-                }
-
-                bool flashEnded = _rankFlashWasActive && !rankFlashActive;
+                int visible = Math.Min(_rowBuffer.Count, WorldLeaderboardPanel.MaxRows);
                 bool rowsReady = _panel.HasAllRows(_rowBuffer.Count);
-                bool changed = _forceRender || signature != _lastRenderSignature || flashEnded || !rowsReady;
+                float interval = _spectatorAnchor != null ? SpectatorUiRefreshInterval : UiRefreshInterval;
 
                 // do score work every 250 ms. and spread out the mesh rebuilding. doing it too fast causes studders.
-                bool refreshDue = now >= _nextUiRefresh || _forceRender || !rowsReady;
-                if (changed && refreshDue)
+                if (_forceRender)
                 {
                     long renderStarted = PerformanceDiagnostics.BeginTiming();
                     _panel.Render(_rowBuffer, spectatorFooter);
                     PerformanceDiagnostics.EndRender(renderStarted);
-                    _lastRenderSignature = signature;
                     _forceRender = false;
+                    _rankFlashWasActive = false;
+                    _passSignature = ComputeRenderSignature(_rowBuffer, spectatorFooter);
+                    _lastRenderSignature = _passSignature;
+                    _rowsLeftInPass = 0;
+                    _nextUiRefresh = now + interval;
+                }
+                else if (!rowsReady && visible > 0)
+                {
+                    int missing = 0;
+                    for (int i = 0; i < visible; i++)
+                    {
+                        if (!_panel.RowExists(i))
+                        {
+                            missing = i;
+                            break;
+                        }
+                    }
+
+                    long renderStarted = PerformanceDiagnostics.BeginTiming();
+                    _panel.Render(_rowBuffer, spectatorFooter, missing);
+                    PerformanceDiagnostics.EndRender(renderStarted);
+                }
+                else if (visible > 0)
+                {
+                    long signature = ComputeRenderSignature(_rowBuffer, spectatorFooter);
+                    bool rankFlashActive = _panel.HasActiveRankFlash(now);
+                    if (rankFlashActive)
+                    {
+                        _rankFlashWasActive = true;
+                    }
+
+                    bool flashEnded = _rankFlashWasActive && !rankFlashActive;
                     if (flashEnded)
                     {
                         _rankFlashWasActive = false;
+                        if (_rowsLeftInPass < visible)
+                        {
+                            _rowsLeftInPass = visible;
+                        }
                     }
 
-                    _nextUiRefresh = now + (_spectatorAnchor != null
-                        ? SpectatorUiRefreshInterval
-                        : UiRefreshInterval);
+                    if (signature != _passSignature)
+                    {
+                        _passSignature = signature;
+                        _rowsLeftInPass = visible;
+                    }
+
+                    if (_rowsLeftInPass > 0 && now >= _nextUiRefresh)
+                    {
+                        int index = _rowCursor % visible;
+                        _rowCursor++;
+                        long renderStarted = PerformanceDiagnostics.BeginTiming();
+                        _panel.Render(_rowBuffer, spectatorFooter, index);
+                        PerformanceDiagnostics.EndRender(renderStarted);
+                        _rowsLeftInPass--;
+                        if (_rowsLeftInPass == 0)
+                        {
+                            _lastRenderSignature = _passSignature;
+                        }
+
+                        _nextUiRefresh = now + interval;
+                    }
                 }
 
                 LogFirstPanelView();
@@ -2233,7 +2291,8 @@ namespace MultiplayerLeaderboard
                 return null;
             }
 
-            bool anchorChanged = !ReferenceEquals(anchor, _spectatorAnchor);
+            int anchorId = anchor.GetInstanceID();
+            bool anchorChanged = anchorId != _spectatorAnchorId;
             if (anchorChanged)
             {
                 if (_spectatorAnchor == null)
@@ -2247,11 +2306,12 @@ namespace MultiplayerLeaderboard
                 ResetNativeSpectatorInfoScan();
                 _panel.DetachFromAnchor();
                 _spectatorAnchor = anchor;
+                _spectatorAnchorId = anchorId;
                 _spectatorSpot = spot;
                 _spectatorPositionedFromNativeBar = false;
                 _nextSpectatorBarCheck = 0f;
                 _spectatorBarChecks = 0;
-                _nextSpectatorPose = now + SpectatorUiRefreshInterval;
+                _rowCursor = 0;
                 PositionSpectatorPanel(anchor, true);
 
                 LeaderboardLog.Info("Spectator leaderboard attached to the selected player's platform" +
@@ -2271,11 +2331,6 @@ namespace MultiplayerLeaderboard
                 {
                     PositionSpectatorPanel(anchor, true);
                 }
-            }
-            else if (_spectatorPositionedFromNativeBar && now >= _nextSpectatorPose)
-            {
-                _nextSpectatorPose = now + SpectatorUiRefreshInterval;
-                PositionSpectatorPanel(anchor, false);
             }
 
             _panel.SetVisible(true);
@@ -2683,13 +2738,14 @@ namespace MultiplayerLeaderboard
         private void ResetSpectatorState()
         {
             _spectatorAnchor = null;
+            _spectatorAnchorId = 0;
             _spectatorSpot = null;
             _spectatorFooterName = null;
             _spectatorFooter = null;
             _spectatorPositionedFromNativeBar = false;
             _spectatorBarChecks = 0;
             _nextSpectatorBarCheck = 0f;
-            _nextSpectatorPose = 0f;
+            _rowCursor = 0;
             ResetNativeSpectatorInfoScan();
         }
 
