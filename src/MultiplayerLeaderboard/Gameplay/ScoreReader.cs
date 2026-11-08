@@ -213,6 +213,8 @@ namespace MultiplayerLeaderboard.Gameplay
                     // displayed from this provider even when the score-state instance found by a scene
                     // scan has not received that player's deltas. Read the provider's own sync state for
                     // the accuracy denominator so both values come from the same packet stream.
+
+                    // deep seek really sucks at this coding thing. enjoy its amazig comments and useless line of code just for state.
                     MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int> remoteState =
                         state;
                     int providerScore = 0;
@@ -247,8 +249,6 @@ namespace MultiplayerLeaderboard.Gameplay
                                                          out multipliedScore, out maxMultipliedScore,
                                                          out combo);
 
-                    // same object was already read above. a different provider state still
-                    // falls back to the manager packet when that one is ahead
                     int managerModified = 0;
                     int managerMultiplied = 0;
                     int managerMax = 0;
@@ -345,10 +345,7 @@ namespace MultiplayerLeaderboard.Gameplay
                     }
                     else if (modifiedScore == 0 && multipliedScore == 0)
                     {
-                        // No notes have been judged yet. With both the score and the maximum at zero,
-                        // the game's own HUD shows 0.00%; report that same real state. If a remote
-                        // score has arrived without its denominator, leave accuracy as "-" rather than
-                        // inventing a percentage.
+                    // if score is zero, just put "-" instead of anything else. (i saw deepseeks god damn comment and had to change it. whatever deep seek model crispyflow was using to create this mode, REALLY hates the "less is more" format lmao)
                         row.Accuracy = 0f;
                         row.HasAccuracy = true;
                     }

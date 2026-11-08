@@ -109,7 +109,7 @@ namespace MultiplayerLeaderboard.Diagnostics
                 }
                 catch
                 {
-                    // a failed flush must not stall the frame
+                    // we cant afford to stall any frames, if a flush fails, we REALLY cant let it to studder the game.
                 }
             }
         }

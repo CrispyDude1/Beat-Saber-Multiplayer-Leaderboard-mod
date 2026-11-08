@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\src\\MultiplayerLeaderboard\\MultiplayerLeaderboard.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\src\\MultiplayerLeaderboard\\MultiplayerLeaderboard.csproj": {
+      "version": "1.4.1",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\src\\MultiplayerLeaderboard\\MultiplayerLeaderboard.csproj",
+        "projectName": "MultiplayerLeaderboard",
+        "projectPath": "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\src\\MultiplayerLeaderboard\\MultiplayerLeaderboard.csproj",
+        "packagesPath": "C:\\Users\\goria\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\src\\MultiplayerLeaderboard\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\goria\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "C:\\Program Files\\dotnet\\library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "framework": "net472",
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "10.0.400"
+      },
+      "frameworks": {
+        "net472": {
+          "framework": "net472",
+          "targetAlias": "net472",
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.401\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

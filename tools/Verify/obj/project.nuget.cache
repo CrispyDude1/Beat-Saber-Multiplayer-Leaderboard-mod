@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "jKCn1TnH7ZM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\goria\\leader\\Beat-Saber-Multiplayer-Leaderboard-mod\\tools\\Verify\\Verify.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\goria\\.nuget\\packages\\mono.cecil\\0.11.5\\mono.cecil.0.11.5.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -74,7 +74,7 @@ namespace MultiplayerLeaderboard.Unity
         internal bool ShowCombo = true;
         internal bool ShowMistakes = true;
 
-        // diagnostic summaries in the mod log. off unless turned on, the sampling used to run during songs
+        // summarize diagnostics. tis indeed off by default.
         internal bool PerformanceLogging;
 
         internal static string SettingsPath

@@ -579,8 +579,7 @@ namespace MultiplayerLeaderboard.Diagnostics
             }
         }
 
-        // called from the slow tick, never from a hitch line. a hitch used to scan every
-        // audio controller in memory and then flush the log to disk on that same frame
+        // use a tick system now. if it scans every audio controller, and flushes logs on the same frame... we probably get an studder.
         internal static void WarmAudioSync(float now)
         {
             if (now < _nextAudioWarm)

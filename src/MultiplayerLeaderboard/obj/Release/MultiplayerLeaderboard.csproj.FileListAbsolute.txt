@@ -1,0 +1,7 @@
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.csproj.AssemblyReference.cache
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.AssemblyInfoInputs.cache
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.AssemblyInfo.cs
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.csproj.CoreCompileInputs.cache
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\bin\Release\MultiplayerLeaderboard.dll
+C:\Users\goria\leader\Beat-Saber-Multiplayer-Leaderboard-mod\src\MultiplayerLeaderboard\obj\Release\MultiplayerLeaderboard.dll

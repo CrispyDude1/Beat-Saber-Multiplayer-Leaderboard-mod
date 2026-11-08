@@ -306,7 +306,7 @@ namespace MultiplayerLeaderboard
                     _mistakes.EndSong();
                     _mistakes = null;
                 }
-
+                // i sure wonder what this does... hmm...
                 ScoreReader.EndSong();
             }
 
@@ -1918,10 +1918,7 @@ namespace MultiplayerLeaderboard
                 bool rowsReady = _panel.HasAllRows(_rowBuffer.Count);
                 bool changed = _forceRender || signature != _lastRenderSignature || flashEnded || !rowsReady;
 
-                // scores are read every 250 ms. the mesh rebuild is the expensive part, so the
-                // visible refresh stays slower. a rank flash is a solid colour, so it only needs
-                // a render when the rank changes and once more when the flash ends
-                // do score work every 250 ms. 
+                // do score work every 250 ms. and spread out the mesh rebuilding. doing it too fast causes studders.
                 bool refreshDue = now >= _nextUiRefresh || _forceRender || !rowsReady;
                 if (changed && refreshDue)
                 {
@@ -1948,7 +1945,7 @@ namespace MultiplayerLeaderboard
             LogOrder(_rowBuffer, now);
         }
 
-        // hash of the visible rows. collisions only delay one refresh
+        // hashes of visible rows. and also a small collision delay aswell. (dont ask why)
         private static long ComputeRenderSignature(List<PlayerRow> rows, string footer)
         {
             unchecked

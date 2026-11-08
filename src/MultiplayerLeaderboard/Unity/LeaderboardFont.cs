@@ -88,7 +88,7 @@ namespace MultiplayerLeaderboard.Unity
                 // TMP settings may not be loaded yet.
             }
 
-            // live labels already use the game font. a few tries is enough, then stop scanning
+            // live labels already use the game font, so kind just steal it. also dont try to do so too much, only got so much budget lmao 
             if (_liveScans < 8)
             {
                 _liveScans++;

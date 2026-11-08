@@ -1265,7 +1265,7 @@ namespace MultiplayerLeaderboard.Unity
             return true;
         }
 
-        // do only one canvas per frame, instead of slamming everything at once. huge studder improvement.
+        // do only one canvas per frame, instead of slamming everything at once. huge studder improvement. (so much better then whatever deepseek was on.)
         internal int FlushUi()
         {
             if (_root == null)
