@@ -1,0 +1,20 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "MultiplayerLeaderboard",
+  "name": "Multiplayer Leaderboard",
+  "author": "MultiplayerLeaderboard",
+  "version": "1.4.0",
+  "description": [
+    "Shows a live multiplayer leaderboard in a fixed world-space panel above the song-progress HUD: rank, player name, accuracy and current score.",
+    "Adds a Multiplayer Leaderboard button to Beat Saber's Mods pane with dedicated Positioning, Rotation, Scaling, Appearance, Text and Displayed Information pages, each with its own Back button.",
+    "Rotation can be adjusted with pointer drag mode or precise X/Y/Z controls and is saved independently from position. Displayed columns can be hidden without stopping their tracking.",
+    "Test Mode keeps a clearly labelled PREVIEW panel visible outside multiplayer so it can be positioned with the game's laser pointer, including while a song is paused. Turning Test Mode off restores multiplayer-only visibility without clearing saved settings.",
+    "Scores and accuracy are read from the game's own multiplayer score sync state. Nothing is estimated or invented; a value that is not available yet is shown as a dash.",
+    "The panel is created at a fixed position and never follows or rotates with the headset. Writes diagnostics to Logs/MultiplayerLeaderboard/MultiplayerLeaderboard.log."
+  ],
+  "gameVersion": "1.40.3",
+  "dependsOn": {
+    "BSIPA": "^4.3.0",
+    "BeatSaberMarkupLanguage": "^1.12.5"
+  }
+}

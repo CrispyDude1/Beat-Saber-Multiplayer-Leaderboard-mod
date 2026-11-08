@@ -1,0 +1,196 @@
+MULTIPLAYER LEADERBOARD 1.4.0 - INSTALLATION
+============================================
+
+What this is
+------------
+A live multiplayer leaderboard that appears inside Beat Saber while a multiplayer
+song is playing. It shows each player's rank, name, accuracy and score in a fixed
+world-space position. It does not follow or rotate with your headset.
+
+Version 1.4.0 refreshes visible text twice a second during play and once a second
+while spectating, while scores are still read four times a second. This keeps
+TextMeshPro and canvas rebuilds off most frames without hiding any information.
+
+Version 1.3.0 follows Beat Saber's own UI pattern more closely: all TMP labels
+share one panel material (the old code accidentally created a private material
+per label), and row canvases are created only when a player row first appears
+and then reused. This avoids prebuilding ten hidden rows. Version 1.2.7 isolates
+each live row on its own small canvas, so a score or accuracy change only
+rebuilds that row instead of the whole panel. Version 1.2.6
+fixed the panel-specific frame stutter: in normal gameplay the leaderboard is
+display-only, its VR raycaster and pointer handlers exist only while editing,
+and hovering no longer rebuilds the background. Score updates, ranking,
+accuracy, saved settings and the panel's appearance are unchanged. Version 1.2.4
+removed the measured 8 ms-per-update global
+ScoreController scan and reduced per-tick allocations and unnecessary UI work. It
+also cleans up panel materials when a panel is removed and adds a Performance
+Diagnostics setting. Version 1.2.2 fixed remote players' scores and
+accuracy not advancing in the leaderboard. Version 1.2.1 fixed the Mods button
+disappearing after the game's normal Settings are confirmed with OK/Apply, and
+prevents an active zero-score player from being shown as FAILED. It still adds the
+normal Multiplayer Leaderboard page to the Mods category, with visibility, Test
+Mode, position, text sizes and background controls.
+
+What you need
+-------------
+1. Beat Saber for PC, version 1.40.3 (Steam or Oculus PC version).
+2. BSIPA 4.3.0 or newer - the mod loader.
+3. BeatSaberMarkupLanguage (BSML) 1.12.5 or newer - the standard mod settings UI.
+   If you already use other mods, you almost certainly have both installed.
+   BSIPA: https://bsmg.wiki/pc-modding.html
+4. No Kick Mod, Ping Mod, SiraUtil or Harmony dependency.
+
+Installation (about one minute)
+-------------------------------
+1. Close Beat Saber completely.
+2. Find your Beat Saber folder. On Steam it is usually:
+      C:\Program Files (x86)\Steam\steamapps\common\Beat Saber
+3. Open the "Plugins" folder inside it.
+4. Copy "MultiplayerLeaderboard.dll" into that Plugins folder.
+      Correct result:  ...\Beat Saber\Plugins\MultiplayerLeaderboard.dll
+5. Confirm BSML.dll is in the same Plugins folder.
+6. Start Beat Saber normally.
+
+Do not create or copy a manifest.json next to the DLL. The manifest is already
+inside the DLL; a loose copy makes the loader refuse to start the mod.
+
+How to check it loaded
+----------------------
+Open this file with Notepad after the game has started:
+      ...\Beat Saber\Logs\MultiplayerLeaderboard\MultiplayerLeaderboard.log
+
+You should see:
+      Multiplayer Leaderboard file: ...\UISettings.ini
+      Mods menu button registered: 'Multiplayer Leaderboard'.
+      Multiplayer Leaderboard initialized successfully
+
+That is normal before you join a lobby. The status lines update when you join a
+lobby and when a song starts.
+
+Opening the settings page
+-------------------------
+1. Start Beat Saber and wait for the main menu.
+2. Open "MODS" on the left.
+3. Select "MULTIPLAYER LEADERBOARD".
+4. A normal game settings page opens. Use the game's Back button to leave it.
+
+During a song, pause and open the Mods tab: the same page is also registered
+there as a Gameplay Setup tab, so you can adjust and save without leaving the level.
+
+The page has four sections:
+      VISIBILITY             Leaderboard Enabled, Test Mode
+      POSITION               Edit, move, save, reset, restore, exit edit
+      SCALING AND APPEARANCE all sizes, row spacing and background
+      CONFIGURATION          Save Settings, Reset All Settings
+
+Using Test Mode
+---------------
+1. Open the Multiplayer Leaderboard page.
+2. Turn "Test Mode" on.
+3. A panel labelled PREVIEW DATA appears outside multiplayer with six sample rows.
+4. Point the game's normal laser pointer at it, hold the trigger (VR) or left
+   mouse button (desktop -fpfc), and drag it. Dragging changes position only.
+5. Use the position buttons for small nudges, or the sliders for size/appearance.
+6. Press "Save Settings" when it looks right.
+7. Turn "Test Mode" off to return to multiplayer-only behaviour. Your saved
+   position and appearance are kept.
+
+The preview rows are sample data, not real players. They are never presented as
+live multiplayer information.
+
+Positioning while a song is paused
+----------------------------------
+With Test Mode on, start or join a song, pause it, and the panel stays visible.
+Drag it with the game's laser pointer, open the Mods page for precise changes,
+then save. The normal pause menu is not intercepted.
+
+Moving and resizing
+-------------------
+- Laser pointer drag: position only, never rotation.
+- Move Left/Right/Up/Down/Closer/Farther: fixed small steps.
+- Overall UI Scale: whole panel.
+- Text Size: all row text; background grows with it.
+- Player Name / Accuracy / Score Size: individual columns; the panel widens
+  automatically so content stays inside the background.
+- Row Spacing and Background Width/Height: more room without clipping.
+
+Saving and restoring
+--------------------
+"Save Position" stores world X/Y/Z and rotation. "Save Settings" stores position,
+rotation, every scale, background size, visibility and Test Mode state.
+
+Settings file:
+      ...\Beat Saber\UserData\MultiplayerLeaderboard\UISettings.ini
+
+It loads automatically on the next game launch. "Restore Saved Position" re-applies
+the saved transform without restarting. "Reset All Settings" returns to defaults.
+
+A diagnostic copy is written to:
+      ...\Beat Saber\Logs\MultiplayerLeaderboard\UISettings.txt
+
+Troubleshooting
+---------------
+- Normal game Settings: pressing OK/Apply restarts the main menu, which is normal Beat
+  Saber behaviour. The Multiplayer Leaderboard button is restored automatically after
+  that restart; it does not need reinstalling and your saved layout is not reset.
+- No Mods button: confirm BSML.dll is installed and your game is 1.40.3. Check the
+  log for "Mods menu button registered".
+- A zero score at song start: this is real. It is not a failure. "FAILED" appears only
+  after the game reports that the local player actually failed; 0.00% is shown until
+  the first notes are judged.
+- Nothing appears in a song: confirm the leaderboard is enabled and you are in a
+  real multiplayer song (not solo, not the lobby). Turn on Test Mode to check the
+  panel visually.
+- The game does not start: remove MultiplayerLeaderboard.dll, start the game, and
+  send the log file to whoever gave you this mod.
+- A value shows "-": the game has not reported it yet. It is never invented.
+- Another player's score stays at 0 while the game shows them scoring: this was
+  fixed in 1.2.2. Check the log for "using the game's own MultiplayerScoreProvider".
+
+Performance diagnostics
+-----------------------
+Open the Multiplayer Leaderboard mod page and leave Performance Diagnostics on
+(the default). During a multiplayer song the mod writes a compact PERF summary to
+  <game>\Logs\MultiplayerLeaderboard\MultiplayerLeaderboard.log
+about every thirty seconds. It includes frame time, maximum update/read/render
+time, UI changes, canvas applies, managed heap change and GC generation counts.
+At most ten PERF hitch lines are written per window, and connection status is a
+single STATUS line. Turn the setting off for a clean comparison; the leaderboard
+still runs normally.
+
+Testing the performance build
+-----------------------------
+1. Close Beat Saber and replace Plugins\MultiplayerLeaderboard.dll with this
+   build.
+2. Start the game, open the Multiplayer Leaderboard mod page and leave Performance
+   Diagnostics on. Enter multiplayer and start a song with at least one other
+   player.
+3. Play for 60-90 seconds. Watch for the first PERF summary after thirty seconds
+   and then one per thirty seconds. The panel should keep updating names, rank,
+   score and accuracy. `hitch_logs` shows how many long frames were recorded in
+   that window; the `PERF hitch` lines carry the update/render timing and the
+   `ui_text_changes`, `ui_apply_ticks` and `ui_applied_labels` values for those
+   frames. Visible text is refreshed twice a second during play and once a second
+   while spectating, even though scores are read four times a second; that cadence
+   is intentional and keeps TMP/canvas rebuilds off most frames.
+4. End the song, then repeat one run with Leaderboard Enabled off while keeping
+   Performance Diagnostics on, so the summaries can be compared without the panel.
+   Restart the game between comparison runs so memory starts from a clean baseline.
+5. Send Logs\MultiplayerLeaderboard\MultiplayerLeaderboard.log from both runs.
+   The PERF lines show whether managed memory grows, GC generation 0/1/2 runs too
+   often, frame time spikes, or read/render time is high.
+  If it appears and the row still stays at 0, send the log from that song.
+- Position looks wrong: open the page, "Restore Saved Position" or "Reset
+  Position", then Save.
+- Panel outside the background: reset the scale/background sliders; the layout
+  normally grows the background with the text.
+
+Log location
+------------
+      ...\Beat Saber\Logs\MultiplayerLeaderboard\MultiplayerLeaderboard.log
+
+If something is wrong, send that file. It contains no account details.
+
+Uninstalling
+------------
+See UNINSTALL.txt in this folder.

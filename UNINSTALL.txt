@@ -1,0 +1,12 @@
+MULTIPLAYER LEADERBOARD - UNINSTALLATION
+========================================
+
+1. Close Beat Saber completely.
+2. Open your Beat Saber folder, then the "Plugins" folder.
+3. Delete this one file:
+      MultiplayerLeaderboard.dll
+4. (Optional) Delete the log folder:
+      ...\Beat Saber\Logs\MultiplayerLeaderboard
+
+That is all. The mod writes nothing else, changes no game files, and leaves no
+settings behind. Your other mods are not affected.

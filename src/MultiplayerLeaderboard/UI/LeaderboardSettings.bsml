@@ -1,0 +1,162 @@
+<scrollable-settings-container xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+                               xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://monkeymanboy.github.io/BSML-Docs/BSMLSchema.xsd'>
+  <vertical id='header' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='MULTIPLAYER LEADERBOARD' font-size='5' italics='true' align='Left' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='~status' font-size='3.5' word-wrapping='true' />
+  </vertical>
+
+  <vertical id='page-main' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='SETTINGS' font-size='4' italics='true' align='Left' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Choose a category. Each page has its own Back button.' font-size='3.2' word-wrapping='true' />
+    <button text='Positioning' on-click='open-positioning' pref-height='9' />
+    <button text='Rotation' on-click='open-rotation' pref-height='9' />
+    <button text='Scaling' on-click='open-scaling' pref-height='9' />
+    <button text='Appearance' on-click='open-appearance' pref-height='9' />
+    <button text='Text Settings' on-click='open-text' pref-height='9' />
+    <button text='Displayed Information' on-click='open-display' pref-height='9' />
+
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='VISIBILITY' font-size='4' italics='true' align='Left' />
+    <toggle-setting text='Leaderboard Enabled' value='leaderboard-enabled' apply-on-change='true'
+                    hover-hint='Master switch. When off, the panel is hidden in songs and in Test Mode.' />
+    <toggle-setting text='Test Mode' value='test-mode' apply-on-change='true'
+                    hover-hint='Shows a clearly labelled preview outside multiplayer songs. Turning it off keeps all saved position and appearance values.' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Test Mode uses PREVIEW DATA. It never stands in for real multiplayer scores or player names.' font-size='3.2' word-wrapping='true' />
+
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='CONFIGURATION' font-size='4' italics='true' align='Left' />
+    <toggle-setting text='Performance Diagnostics' value='performance-diagnostics' apply-on-change='true'
+                    hover-hint='Writes a memory, GC and update-cost summary to the mod log every 10 seconds during a song.' />
+    <button text='Save Settings' on-click='save-settings' pref-height='8' />
+    <button text='Restore Saved Settings' on-click='restore-saved' pref-height='8' />
+    <button text='Reset All Settings' on-click='reset-settings' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 18' text='Save Settings writes position, rotation, scales, appearance, displayed columns and Test Mode state. Next launch loads them automatically.' font-size='3.2' word-wrapping='true' />
+  </vertical>
+
+  <vertical id='page-positioning' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='POSITIONING' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Position changes never write rotation. Drag the panel with the game laser pointer, or nudge it with these buttons.' font-size='3.2' word-wrapping='true' />
+    <button text='Edit Position' on-click='edit-position' pref-height='8' />
+    <button text='Move Left' on-click='move-left' pref-height='8' />
+    <button text='Move Right' on-click='move-right' pref-height='8' />
+    <button text='Move Up' on-click='move-up' pref-height='8' />
+    <button text='Move Down' on-click='move-down' pref-height='8' />
+    <button text='Move Closer' on-click='move-closer' pref-height='8' />
+    <button text='Move Farther' on-click='move-farther' pref-height='8' />
+    <button text='Pause / Resume Dragging' on-click='toggle-drag' pref-height='8' />
+    <button text='Save Position' on-click='save-position' pref-height='8' />
+    <button text='Reset Position' on-click='reset-position' pref-height='8' />
+    <button text='Restore Saved Position' on-click='restore-saved' pref-height='8' />
+    <button text='Exit Edit Mode' on-click='exit-edit' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='SPECTATOR PANEL POSITION' font-size='4' italics='true' align='Left' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 20' text='These offsets apply while spectating and are saved automatically. Rotation stays locked to the selected platform; only position changes. Horizontal and vertical are local to the panel, and depth moves it toward or away from you.' font-size='3.2' word-wrapping='true' />
+    <slider-setting text='Spectator Horizontal' min='-3' max='3' increment='0.05' value='spectator-x'
+                    apply-on-change='true' show-buttons='true' />
+    <slider-setting text='Spectator Vertical' min='-2' max='2' increment='0.05' value='spectator-y'
+                    apply-on-change='true' show-buttons='true' />
+    <slider-setting text='Spectator Forward / Back' min='-3' max='3' increment='0.05' value='spectator-z'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Spectator Position' on-click='reset-spectator-position' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+
+  <vertical id='page-rotation' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='ROTATION' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Pointer Rotation Mode: point at the panel and hold the trigger to rotate it freely. In desktop mode, right-click-drag also rotates without changing position.' font-size='3.2' word-wrapping='true' />
+    <toggle-setting text='Pointer Rotation Mode' value='pointer-rotation' apply-on-change='true'
+                    hover-hint='When on, dragging the panel rotates it instead of moving it. Turn it off to return to normal position dragging.' />
+    <button text='Toggle Pointer Rotation' on-click='toggle-pointer-rotation' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Precise X / Y / Z controls. Rotation is independent of position and is saved with Save Settings.' font-size='3.2' word-wrapping='true' />
+    <slider-setting text='Rotation X' min='-180' max='180' increment='1' value='rotation-x'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Rotation X' on-click='reset-rotation-x' pref-height='7' />
+    <slider-setting text='Rotation Y' min='-180' max='180' increment='1' value='rotation-y'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Rotation Y' on-click='reset-rotation-y' pref-height='7' />
+    <slider-setting text='Rotation Z' min='-180' max='180' increment='1' value='rotation-z'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Rotation Z' on-click='reset-rotation-z' pref-height='7' />
+    <button text='Rotate X -5' on-click='rotate-x-minus' pref-height='8' />
+    <button text='Rotate X +5' on-click='rotate-x-plus' pref-height='8' />
+    <button text='Rotate Y -5' on-click='rotate-y-minus' pref-height='8' />
+    <button text='Rotate Y +5' on-click='rotate-y-plus' pref-height='8' />
+    <button text='Rotate Z -5' on-click='rotate-z-minus' pref-height='8' />
+    <button text='Rotate Z +5' on-click='rotate-z-plus' pref-height='8' />
+    <button text='Reset Rotation' on-click='reset-rotation' pref-height='8' />
+    <button text='Save Rotation' on-click='save-settings' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+
+  <vertical id='page-scaling' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='SCALING' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Overall UI Scale changes the whole panel uniformly. Text Size changes the type and the panel expands to keep every column inside it.' font-size='3.2' word-wrapping='true' />
+    <slider-setting text='Overall UI Scale' min='0.5' max='2' increment='0.05' value='overall-scale'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Overall UI Scale' on-click='reset-overall-scale' pref-height='7' />
+    <slider-setting text='Row Spacing' min='0.75' max='1.6' increment='0.05' value='row-spacing'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Row Spacing' on-click='reset-row-spacing' pref-height='7' />
+    <slider-setting text='Background Width' min='1' max='1.5' increment='0.05' value='background-width'
+                    apply-on-change='true' show-buttons='true' hover-hint='Extra background width; the columns also widen automatically when their text gets bigger.' />
+    <button text='Reset Background Width' on-click='reset-background-width' pref-height='7' />
+    <slider-setting text='Background Height' min='1' max='1.5' increment='0.05' value='background-height'
+                    apply-on-change='true' show-buttons='true' hover-hint='Extra background height; rows and text still determine the minimum that keeps everything inside.' />
+    <button text='Reset Background Height' on-click='reset-background-height' pref-height='7' />
+    <button text='Reset Scale and Background' on-click='reset-scale' pref-height='8' />
+    <button text='Save Scaling' on-click='save-settings' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+
+  <vertical id='page-appearance' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='APPEARANCE' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Background opacity affects only the black field behind the leaderboard. Text brightness affects every label, including the first-place highlight and the rank-loss flash.' font-size='3.2' word-wrapping='true' />
+    <slider-setting text='Background Opacity' min='0' max='1' increment='0.05' value='background-opacity'
+                    apply-on-change='true' show-buttons='true' hover-hint='0 makes the background completely invisible; the text and panel interactions remain available.' />
+    <button text='Reset Background Opacity' on-click='reset-background-opacity' pref-height='7' />
+    <slider-setting text='Text Brightness' min='0.5' max='1.3' increment='0.05' value='text-brightness'
+                    apply-on-change='true' show-buttons='true' hover-hint='Adjusts text brightness while keeping the existing column colours readable.' />
+    <button text='Reset Text Brightness' on-click='reset-text-brightness' pref-height='7' />
+    <toggle-setting text='Text Bloom' value='bloom' apply-on-change='true'
+                    hover-hint='Enables the outer glow around the leaderboard text. Bloom Intensity controls how strong it is.' />
+    <string-setting text='Bloom Intensity' value='bloom-intensity' apply-on-change='true'
+                    hover-hint='0 turns the glow off even while the toggle is on. 1 is subtle, 5 is strong, 10 is maximum.' />
+    <button text='Reset Bloom Intensity' on-click='reset-bloom-intensity' pref-height='7' />
+    <button text='Reset Appearance' on-click='reset-appearance' pref-height='8' />
+    <button text='Save Appearance' on-click='save-settings' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+
+  <vertical id='page-text' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='TEXT SETTINGS' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='Text size scales type and column spacing together. Overall UI Scale is separate and remains on the Scaling page.' font-size='3.2' word-wrapping='true' />
+    <slider-setting text='Text Size' min='0.6' max='1.6' increment='0.05' value='text-scale'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Text Size' on-click='reset-text-scale' pref-height='7' />
+    <slider-setting text='Player Name Size' min='0.7' max='1.5' increment='0.05' value='name-scale'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Player Name Size' on-click='reset-name-scale' pref-height='7' />
+    <slider-setting text='Accuracy Size' min='0.7' max='1.5' increment='0.05' value='accuracy-scale'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Accuracy Size' on-click='reset-accuracy-scale' pref-height='7' />
+    <slider-setting text='Score Size' min='0.7' max='1.5' increment='0.05' value='score-scale'
+                    apply-on-change='true' show-buttons='true' />
+    <button text='Reset Score Size' on-click='reset-score-scale' pref-height='7' />
+    <button text='Save Text Settings' on-click='save-settings' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+
+  <vertical id='page-display' spacing='1' vertical-fit='PreferredSize' preferred-width='90' child-expand-width='true' child-control-width='true'>
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 8' text='DISPLAYED INFORMATION' font-size='4' italics='true' align='Left' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+    <text anchor-min='0 0.5' anchor-max='1 0.5' size-delta='0 14' text='These switches hide columns visually only. Score, accuracy, combo and mistake tracking continue to run while hidden, and re-enabling a column restores it immediately.' font-size='3.2' word-wrapping='true' />
+    <toggle-setting text='Show Combo' value='show-combo' apply-on-change='true' />
+    <toggle-setting text='Show Mistakes' value='show-mistakes' apply-on-change='true' />
+    <toggle-setting text='Show Score' value='show-score' apply-on-change='true' />
+    <toggle-setting text='Show Accuracy' value='show-accuracy' apply-on-change='true' />
+    <button text='Save Displayed Information' on-click='save-settings' pref-height='8' />
+    <button text='Back to Settings' on-click='go-main' pref-height='8' />
+  </vertical>
+</scrollable-settings-container>

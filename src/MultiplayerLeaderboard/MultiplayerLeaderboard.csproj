@@ -1,0 +1,77 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>MultiplayerLeaderboard</AssemblyName>
+    <RootNamespace>MultiplayerLeaderboard</RootNamespace>
+    <Version>1.4.0</Version>
+    <FileVersion>1.4.0.0</FileVersion>
+    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <Product>Multiplayer Leaderboard</Product>
+    <Description>World-space multiplayer leaderboard (rank, name, accuracy, score) for Beat Saber.</Description>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <DebugType>none</DebugType>
+    <NoWarn>$(NoWarn);CS0649;CS0169</NoWarn>
+
+    <!-- Point this at any Beat Saber install to rebuild against it:
+         dotnet build -c Release -p:BeatSaberDir="D:\Steam\steamapps\common\Beat Saber" -->
+    <BeatSaberDir Condition="'$(BeatSaberDir)' == ''">$(MSBuildThisFileDirectory)..\..\..</BeatSaberDir>
+    <ManagedDir>$(BeatSaberDir)\Beat Saber_Data\Managed</ManagedDir>
+
+    <!-- BSIPA (mod loader). Compile-time only; the loader ships these files. -->
+    <BsipaDir Condition="'$(BsipaDir)' == '' and Exists('$(BeatSaberDir)\IPA\Data\Managed\IPA.Loader.dll')">$(BeatSaberDir)\IPA</BsipaDir>
+    <BsipaDir Condition="'$(BsipaDir)' == ''">$(MSBuildThisFileDirectory)..\..\..\..\.tools\bsipa\x\IPA</BsipaDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="manifest.json" />
+    <EmbeddedResource Include="UI\LeaderboardSettings.bsml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Mod loader only. This mod installs no Harmony patches. -->
+    <Reference Include="IPA.Loader">
+      <HintPath>$(BsipaDir)\Data\Managed\IPA.Loader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Game code: multiplayer session, the game's own score sync state, and the local player's
+         virtual position in the multiplayer play space. All are shipped with Beat Saber. -->
+    <Reference Include="BGNetCore"><HintPath>$(ManagedDir)\BGNetCore.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="GameplayCore"><HintPath>$(ManagedDir)\GameplayCore.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BeatmapCore"><HintPath>$(ManagedDir)\BeatmapCore.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Networking"><HintPath>$(ManagedDir)\Networking.dll</HintPath><Private>false</Private></Reference>
+    <!-- Networking's sync-state interfaces expose LiteNetLib serialization types; the game ships it. -->
+    <Reference Include="LiteNetLib"><HintPath>$(ManagedDir)\LiteNetLib.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Main"><HintPath>$(ManagedDir)\Main.dll</HintPath><Private>false</Private></Reference>
+    <!-- The game's own interactive UI layer: desktop laser pointer, VRInputModule and VRGraphicRaycaster. -->
+    <Reference Include="VRUI"><HintPath>$(ManagedDir)\VRUI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="HMLib"><HintPath>$(ManagedDir)\HMLib.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BeatSaber.ViewSystem"><HintPath>$(ManagedDir)\BeatSaber.ViewSystem.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="HMUI"><HintPath>$(ManagedDir)\HMUI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Zenject"><HintPath>$(ManagedDir)\Zenject.dll</HintPath><Private>false</Private></Reference>
+    <!-- BSML is the game's standard mod-settings UI: it provides the Mods pane button and the
+         settings page building blocks used by the other mods in this installation. -->
+    <Reference Include="BSML"><HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Unity: world-space canvas, raw colour quads and TextMeshPro text. -->
+    <Reference Include="UnityEngine"><HintPath>$(ManagedDir)\UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(ManagedDir)\UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+    <!-- Used only by the opt-in UI probe to save its bloom sample image. -->
+    <Reference Include="UnityEngine.ImageConversionModule"><HintPath>$(ManagedDir)\UnityEngine.ImageConversionModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(ManagedDir)\UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(ManagedDir)\UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(ManagedDir)\UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(ManagedDir)\Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule"><HintPath>$(ManagedDir)\UnityEngine.TextCoreFontEngineModule.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+</Project>
