@@ -74,7 +74,7 @@ namespace MultiplayerLeaderboard.UI
         [UIValue("performance-diagnostics")]
         public bool PerformanceDiagnostics
         {
-            get { return Settings == null || Settings.PerformanceLogging; }
+            get { return Settings != null && Settings.PerformanceLogging; }
             set
             {
                 if (Runtime != null && Settings != null && Settings.PerformanceLogging != value)

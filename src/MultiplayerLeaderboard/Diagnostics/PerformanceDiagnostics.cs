@@ -218,6 +218,11 @@ namespace MultiplayerLeaderboard.Diagnostics
             _windowUnityBytes = UnityAllocatedBytes();
             _windowMonoBytes = UnityMonoBytes();
 
+            _audioSync = null;
+            _audioSyncLookups = 0;
+            _nextAudioWarm = 0f;
+            _allowAudioScan = false;
+
             LeaderboardLog.Info("PERF monitoring started (" + reason + "): " + players + " score-sync player(s), leaderboard " +
                                 (leaderboardEnabled ? "enabled" : "disabled (baseline: no panel is built)") +
                                 ", summary every " + SummaryInterval.ToString("0", CultureInfo.InvariantCulture) +
@@ -533,6 +538,9 @@ namespace MultiplayerLeaderboard.Diagnostics
             return -1d;
         }
 
+        private static float _nextAudioWarm;
+        private static bool _allowAudioScan;
+
         private static void EnsureAudioSync()
         {
             if (_audioSync != null && _audioSync.isActiveAndEnabled)
@@ -541,7 +549,7 @@ namespace MultiplayerLeaderboard.Diagnostics
             }
 
             _audioSync = null;
-            if (_audioSyncLookups >= 8)
+            if (!_allowAudioScan || _audioSyncLookups >= 8)
             {
                 return;
             }
@@ -550,7 +558,8 @@ namespace MultiplayerLeaderboard.Diagnostics
             try
             {
                 AudioTimeSyncController[] controllers =
-                    Resources.FindObjectsOfTypeAll<AudioTimeSyncController>();
+                    UnityEngine.Object.FindObjectsByType<AudioTimeSyncController>(
+                        FindObjectsInactive.Exclude, FindObjectsSortMode.None);
                 if (controllers != null)
                 {
                     for (int i = 0; i < controllers.Length; i++)
@@ -568,6 +577,21 @@ namespace MultiplayerLeaderboard.Diagnostics
             {
                 _audioSync = null;
             }
+        }
+
+        // called from the slow tick, never from a hitch line. a hitch used to scan every
+        // audio controller in memory and then flush the log to disk on that same frame
+        internal static void WarmAudioSync(float now)
+        {
+            if (now < _nextAudioWarm)
+            {
+                return;
+            }
+
+            _nextAudioWarm = now + 2f;
+            _allowAudioScan = true;
+            EnsureAudioSync();
+            _allowAudioScan = false;
         }
 
         private static double AgeMs(float now, float then)        {
@@ -627,6 +651,7 @@ namespace MultiplayerLeaderboard.Diagnostics
                    .Append(".");
 
             LeaderboardLog.Info(builder.ToString());
+            LeaderboardLog.Flush();
 
             _frames = 0;
             _frameTotalMs = 0d;

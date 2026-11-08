@@ -3,7 +3,7 @@
   "id": "MultiplayerLeaderboard",
   "name": "Multiplayer Leaderboard",
   "author": "MultiplayerLeaderboard",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": [
     "Shows a live multiplayer leaderboard in a fixed world-space panel above the song-progress HUD: rank, player name, accuracy and current score.",
     "Adds a Multiplayer Leaderboard button to Beat Saber's Mods pane with dedicated Positioning, Rotation, Scaling, Appearance, Text and Displayed Information pages, each with its own Back button.",

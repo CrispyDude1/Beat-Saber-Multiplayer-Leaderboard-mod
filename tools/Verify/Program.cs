@@ -204,7 +204,7 @@ namespace MultiplayerLeaderboard.Verify
 
                 Check(Text(root, "id") == "MultiplayerLeaderboard", "manifest id is MultiplayerLeaderboard");
                 Check(Text(root, "name") == "Multiplayer Leaderboard", "manifest name is Multiplayer Leaderboard");
-                Check(Text(root, "version") == "1.4.0", "manifest version is 1.4.0");
+                Check(Text(root, "version") == "1.4.1", "manifest version is 1.4.1");
                 Check(Text(root, "gameVersion") == "1.40.3", "manifest gameVersion is 1.40.3");
 
                 bool hasBsipa = root.TryGetProperty("dependsOn", out JsonElement dependsOn) &&

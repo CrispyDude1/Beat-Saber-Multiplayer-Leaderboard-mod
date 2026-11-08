@@ -26,11 +26,19 @@ namespace MultiplayerLeaderboard.Gameplay
         private static readonly HashSet<string> _loggedMissingRemoteAccuracy = new HashSet<string>();
         private static readonly List<MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>>
             StateBuffer = new List<MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>>(16);
+        private static readonly Dictionary<string, MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>>
+            ProviderStates = new Dictionary<string, MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>>(16);
 
         internal static void BeginSong()
         {
+            EndSong();
+        }
+
+        internal static void EndSong()
+        {
             _loggedMissingRemoteAccuracy.Clear();
             StateBuffer.Clear();
+            ProviderStates.Clear();
         }
 
         internal static bool TryRead(IScoreSyncStateManager manager, MultiplayerScoreProvider provider,
@@ -214,13 +222,14 @@ namespace MultiplayerLeaderboard.Gameplay
                     {
                         try
                         {
+                            string remoteId = SafeUserId(player);
                             MultiplayerScoreProvider.RankedPlayer ranked;
-                            if (provider.TryGetScore(SafeUserId(player), out ranked) && ranked != null)
+                            if (provider.TryGetScore(remoteId, out ranked) && ranked != null)
                             {
                                 hasProviderRow = true;
                                 providerScore = Math.Max(0, ranked.score);
                                 MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int> providerState =
-                                    ProviderSyncState(ranked);
+                                    CachedProviderState(remoteId, ranked);
                                 if (providerState != null)
                                 {
                                     remoteState = providerState;
@@ -238,15 +247,20 @@ namespace MultiplayerLeaderboard.Gameplay
                                                          out multipliedScore, out maxMultipliedScore,
                                                          out combo);
 
-                    // Keep the scene manager's latest packet as a fallback for older game builds or
-                    // when the provider is not present. The live provider value still wins for score.
-                    int managerModified;
-                    int managerMultiplied;
-                    int managerMax;
-                    int managerCombo;
-                    bool managerHasData = TryReadLatest(state, out managerModified,
+                    // same object was already read above. a different provider state still
+                    // falls back to the manager packet when that one is ahead
+                    int managerModified = 0;
+                    int managerMultiplied = 0;
+                    int managerMax = 0;
+                    int managerCombo = 0;
+                    bool managerHasData = false;
+                    if (!ReferenceEquals(remoteState, state))
+                    {
+                        managerHasData = TryReadLatest(state, out managerModified,
                                                        out managerMultiplied, out managerMax,
                                                        out managerCombo);
+                    }
+
                     if (!providerHasData && managerHasData)
                     {
                         combo = managerCombo;
@@ -376,6 +390,25 @@ namespace MultiplayerLeaderboard.Gameplay
                 LeaderboardLog.Debug("Reading remote score fields failed: " + ex.GetType().Name);
                 return false;
             }
+        }
+
+        private static MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>
+            CachedProviderState(string userId, MultiplayerScoreProvider.RankedPlayer ranked)
+        {
+            MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int> cached;
+            if (!string.IsNullOrEmpty(userId) && ProviderStates.TryGetValue(userId, out cached) && cached != null)
+            {
+                return cached;
+            }
+
+            MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int> found =
+                ProviderSyncState(ranked);
+            if (found != null && !string.IsNullOrEmpty(userId))
+            {
+                ProviderStates[userId] = found;
+            }
+
+            return found;
         }
 
         private static MultiplayerSyncState<StandardScoreSyncState, StandardScoreSyncState.Score, int>

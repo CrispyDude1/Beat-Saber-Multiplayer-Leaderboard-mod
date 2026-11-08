@@ -5,9 +5,9 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>MultiplayerLeaderboard</AssemblyName>
     <RootNamespace>MultiplayerLeaderboard</RootNamespace>
-    <Version>1.4.0</Version>
-    <FileVersion>1.4.0.0</FileVersion>
-    <AssemblyVersion>1.4.0.0</AssemblyVersion>
+    <Version>1.4.1</Version>
+    <FileVersion>1.4.1.0</FileVersion>
+    <AssemblyVersion>1.4.1.0</AssemblyVersion>
     <Product>Multiplayer Leaderboard</Product>
     <Description>World-space multiplayer leaderboard (rank, name, accuracy, score) for Beat Saber.</Description>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

@@ -24,6 +24,7 @@ namespace MultiplayerLeaderboard.Diagnostics
     {
         private const long MaxBytes = 2L * 1024L * 1024L;
         private static readonly object Sync = new object();
+        private static float _nextFlushAt;
 
         private static StreamWriter _writer;
         private static Action<LogLevel, string> _mirror;
@@ -50,7 +51,7 @@ namespace MultiplayerLeaderboard.Diagnostics
                     _writer = new StreamWriter(
                         new FileStream(FilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite),
                         new UTF8Encoding(false));
-                    _writer.AutoFlush = true;
+                    _writer.AutoFlush = false;
                     Available = true;
                     return true;
                 }
@@ -84,6 +85,32 @@ namespace MultiplayerLeaderboard.Diagnostics
             catch
             {
                 // Rotation is best effort; a locked file must never stop the mod from logging.
+            }
+        }
+
+        public static void FlushIfDue(float now)
+        {
+            if (now < _nextFlushAt)
+            {
+                return;
+            }
+
+            _nextFlushAt = now + 5f;
+            Flush();
+        }
+
+        public static void Flush()
+        {
+            lock (Sync)
+            {
+                try
+                {
+                    _writer?.Flush();
+                }
+                catch
+                {
+                    // a failed flush must not stall the frame
+                }
             }
         }
 

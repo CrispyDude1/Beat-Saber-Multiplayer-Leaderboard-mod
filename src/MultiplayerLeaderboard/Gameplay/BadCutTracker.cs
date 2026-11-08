@@ -253,7 +253,7 @@ namespace MultiplayerLeaderboard.Gameplay
 
             try
             {
-                MultiplayerController[] controllers = Resources.FindObjectsOfTypeAll<MultiplayerController>();
+                MultiplayerController[] controllers = SceneObjects.Find<MultiplayerController>();
                 if (controllers != null)
                 {
                     for (int i = 0; i < controllers.Length; i++)
@@ -267,8 +267,7 @@ namespace MultiplayerLeaderboard.Gameplay
                     }
                 }
 
-                MultiplayerLocalActiveClient[] clients =
-                    Resources.FindObjectsOfTypeAll<MultiplayerLocalActiveClient>();
+                MultiplayerLocalActiveClient[] clients = SceneObjects.Find<MultiplayerLocalActiveClient>();
                 if (clients != null)
                 {
                     for (int i = 0; i < clients.Length; i++)
@@ -343,6 +342,8 @@ namespace MultiplayerLeaderboard.Gameplay
             }
         }
 
+        private static readonly Dictionary<string, FieldInfo> RpcFields = new Dictionary<string, FieldInfo>(4);
+
         private static IGameplayRpcManager ReadRpc(object owner, string fieldName)
         {
             if (owner == null)
@@ -352,8 +353,14 @@ namespace MultiplayerLeaderboard.Gameplay
 
             try
             {
-                FieldInfo field = owner.GetType().GetField(fieldName,
-                    BindingFlags.Instance | BindingFlags.NonPublic);
+                string key = owner.GetType().FullName + "." + fieldName;
+                FieldInfo field;
+                if (!RpcFields.TryGetValue(key, out field))
+                {
+                    field = owner.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+                    RpcFields[key] = field;
+                }
+
                 return field != null ? field.GetValue(owner) as IGameplayRpcManager : null;
             }
             catch

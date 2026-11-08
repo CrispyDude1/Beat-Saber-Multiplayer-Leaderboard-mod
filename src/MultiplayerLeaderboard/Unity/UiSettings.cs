@@ -74,9 +74,8 @@ namespace MultiplayerLeaderboard.Unity
         internal bool ShowCombo = true;
         internal bool ShowMistakes = true;
 
-        // Low-frequency memory, GC and update-cost summaries in the mod log. This is a diagnostic
-        // setting, not a gameplay setting; it defaults on so a normal test run produces useful data.
-        internal bool PerformanceLogging = true;
+        // diagnostic summaries in the mod log. off unless turned on, the sampling used to run during songs
+        internal bool PerformanceLogging;
 
         internal static string SettingsPath
         {

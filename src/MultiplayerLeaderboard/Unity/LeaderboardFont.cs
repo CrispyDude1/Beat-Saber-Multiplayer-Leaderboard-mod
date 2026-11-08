@@ -15,6 +15,8 @@ namespace MultiplayerLeaderboard.Unity
     {
         private static TMP_FontAsset _resolvedFont;
         private static float _nextAttempt;
+        private static int _assetScans;
+        private static int _liveScans;
         private static bool _logged;
 
         public static bool Apply(TextMeshProUGUI label)
@@ -86,6 +88,23 @@ namespace MultiplayerLeaderboard.Unity
                 // TMP settings may not be loaded yet.
             }
 
+            // live labels already use the game font. a few tries is enough, then stop scanning
+            if (_liveScans < 8)
+            {
+                _liveScans++;
+                if (TryFontFromLiveText())
+                {
+                    return _resolvedFont;
+                }
+            }
+
+            if (_assetScans >= 3)
+            {
+                return null;
+            }
+
+            _assetScans++;
+
             try
             {
                 TMP_FontAsset[] fonts = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
@@ -101,30 +120,8 @@ namespace MultiplayerLeaderboard.Unity
                     }
                 }
 
-                // The game's HUD fonts are not in Resources. Reuse the font/material from a real TMP text
-                // that is already rendering in the scene; this is the same SDF material the game uses.
-                TextMeshProUGUI[] texts = Resources.FindObjectsOfTypeAll<TextMeshProUGUI>();
-                if (texts != null)
-                {
-                    for (int i = 0; i < texts.Length; i++)
-                    {
-                        TextMeshProUGUI text = texts[i];
-                        if (text == null || text.gameObject == null || !text.gameObject.activeInHierarchy)
-                        {
-                            continue;
-                        }
-
-                        TMP_FontAsset font = text.font;
-                        if (IsUsable(font))
-                        {
-                            _resolvedFont = font;
-                            return _resolvedFont;
-                        }
-                    }
-                }
-
                 LeaderboardLog.Debug("Panel font not available yet (" + (fonts == null ? 0 : fonts.Length) +
-                                     " font asset(s), " + (texts == null ? 0 : texts.Length) + " live TMP text(s)); retrying.");
+                                     " font asset(s)); retrying.");
             }
             catch (Exception ex)
             {
@@ -132,6 +129,41 @@ namespace MultiplayerLeaderboard.Unity
             }
 
             return null;
+        }
+
+        private static bool TryFontFromLiveText()
+        {
+            try
+            {
+                TextMeshProUGUI[] texts = UnityEngine.Object.FindObjectsByType<TextMeshProUGUI>(
+                    FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+                if (texts == null)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < texts.Length; i++)
+                {
+                    TextMeshProUGUI text = texts[i];
+                    if (text == null)
+                    {
+                        continue;
+                    }
+
+                    TMP_FontAsset font = text.font;
+                    if (IsUsable(font))
+                    {
+                        _resolvedFont = font;
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LeaderboardLog.Debug("Live font lookup failed: " + ex.GetType().Name);
+            }
+
+            return false;
         }
 
         private static bool IsUsable(TMP_FontAsset font)

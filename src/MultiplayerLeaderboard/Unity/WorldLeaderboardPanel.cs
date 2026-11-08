@@ -71,6 +71,18 @@ namespace MultiplayerLeaderboard.Unity
             }
         }
 
+        private struct PendingColor
+        {
+            public TextMeshProUGUI Label;
+            public Color Value;
+
+            public PendingColor(TextMeshProUGUI label, Color value)
+            {
+                Label = label;
+                Value = value;
+            }
+        }
+
         private GameObject _root;
         private bool _platformAttached;
         private RectTransform _rect;
@@ -94,6 +106,7 @@ namespace MultiplayerLeaderboard.Unity
         private LeaderboardEditor _editor;
         private readonly List<TextMeshProUGUI> _texts = new List<TextMeshProUGUI>();
         private readonly List<PendingText> _pendingText = new List<PendingText>(64);
+        private readonly List<PendingColor> _pendingColor = new List<PendingColor>(64);
         private int _createdRows;
         private int _rowCanvasCount;
         private bool _topologyLogged;
@@ -123,7 +136,7 @@ namespace MultiplayerLeaderboard.Unity
         private bool _showMistakes = true;
         private bool _enabled = true;
         private bool _testMode;
-        private bool _performanceLogging = true;
+        private bool _performanceLogging;
         private bool _preview;
         private bool _editMode;
         private bool _dragEnabled;
@@ -1252,29 +1265,36 @@ namespace MultiplayerLeaderboard.Unity
             return true;
         }
 
-        /// <summary>
-        /// Applies a bounded number of queued TMP changes per frame. The runtime passes six so one
-        /// row's six labels are normally applied together and its row canvas rebuilds once, while a
-        /// ten-player refresh is still spread over several frames instead of becoming one burst.
-        /// </summary>
-        internal int FlushUi(int budget)
+        // do only one canvas per frame, instead of slamming everything at once. huge studder improvement.
+        internal int FlushUi()
         {
-            if (_root == null || budget <= 0)
+            if (_root == null)
+            {
+                return 0;
+            }
+
+            Canvas canvas = NextPendingCanvas();
+            if (canvas == null)
             {
                 return 0;
             }
 
             int applied = 0;
-            while (applied < budget && _pendingText.Count > 0)
+            for (int i = _pendingText.Count - 1; i >= 0; i--)
             {
-                int index = _pendingText.Count - 1;
-                PendingText change = _pendingText[index];
-                _pendingText.RemoveAt(index);
+                PendingText change = _pendingText[i];
                 if (change.Label == null)
+                {
+                    _pendingText.RemoveAt(i);
+                    continue;
+                }
+
+                if (change.Label.canvas != canvas)
                 {
                     continue;
                 }
 
+                _pendingText.RemoveAt(i);
                 if (!string.Equals(change.Label.text, change.Value, StringComparison.Ordinal))
                 {
                     change.Label.text = change.Value;
@@ -1282,18 +1302,98 @@ namespace MultiplayerLeaderboard.Unity
                 }
             }
 
+            for (int i = _pendingColor.Count - 1; i >= 0; i--)
+            {
+                PendingColor change = _pendingColor[i];
+                if (change.Label == null)
+                {
+                    _pendingColor.RemoveAt(i);
+                    continue;
+                }
+
+                if (change.Label.canvas != canvas)
+                {
+                    continue;
+                }
+
+                _pendingColor.RemoveAt(i);
+                if (change.Label.color != change.Value)
+                {
+                    change.Label.color = change.Value;
+                    applied++;
+                }
+            }
+
             return applied;
         }
 
-        private static bool SetColor(TextMeshProUGUI label, Color value)
+        private Canvas NextPendingCanvas()
         {
-            if (label != null && label.color != value)
+            while (_pendingText.Count > 0)
             {
-                label.color = value;
+                int index = _pendingText.Count - 1;
+                TextMeshProUGUI label = _pendingText[index].Label;
+                if (label == null || label.canvas == null)
+                {
+                    _pendingText.RemoveAt(index);
+                    continue;
+                }
+
+                return label.canvas;
+            }
+
+            while (_pendingColor.Count > 0)
+            {
+                int index = _pendingColor.Count - 1;
+                TextMeshProUGUI label = _pendingColor[index].Label;
+                if (label == null || label.canvas == null)
+                {
+                    _pendingColor.RemoveAt(index);
+                    continue;
+                }
+
+                return label.canvas;
+            }
+
+            return null;
+        }
+
+        private bool SetColor(TextMeshProUGUI label, Color value)
+        {
+            if (label == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _pendingColor.Count; i++)
+            {
+                if (!ReferenceEquals(_pendingColor[i].Label, label))
+                {
+                    continue;
+                }
+
+                if (_pendingColor[i].Value == value)
+                {
+                    return false;
+                }
+
+                if (label.color == value)
+                {
+                    _pendingColor.RemoveAt(i);
+                    return false;
+                }
+
+                _pendingColor[i] = new PendingColor(label, value);
                 return true;
             }
 
-            return false;
+            if (label.color == value)
+            {
+                return false;
+            }
+
+            _pendingColor.Add(new PendingColor(label, value));
+            return true;
         }
 
         private bool EnsureRows(int count)
@@ -2331,6 +2431,7 @@ namespace MultiplayerLeaderboard.Unity
             _editHint = null;
             _texts.Clear();
             _pendingText.Clear();
+            _pendingColor.Clear();
             _footerCache = null;
             _footerCount = -1;
             _footerSpectators = -1;

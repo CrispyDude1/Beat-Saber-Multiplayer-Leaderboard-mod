@@ -207,16 +207,10 @@ namespace MultiplayerLeaderboard
             // second update loop; this component already runs every frame and returns early between ticks.
             PerformanceDiagnostics.Frame();
 
-            // TMP text updates are queued by Render and applied a couple of labels at a time by this
-            // per-frame pump. A full-state sync can change every row at once; spreading those mesh
-            // rebuilds avoids one long frame while keeping the 4 Hz data refresh unchanged.
+            // queue stuff to do ONE thing per frame, apperently this used to slam it all in one frame.
             if (_panel != null && _panel.IsAlive)
             {
-                // One row has six labels. A budget of six lets a row's changes apply in one frame,
-                // so its small canvas rebuilds once instead of once per label frame, while still
-                // keeping a ten-player refresh from turning into one large burst. Spectator mode
-                // reuses this same panel; it never has a second UI instance to flush.
-                int applied = _panel.FlushUi(6);
+                int applied = _panel.FlushUi();
                 if (applied > 0)
                 {
                     PerformanceDiagnostics.RecordUiApply(applied);
@@ -266,8 +260,6 @@ namespace MultiplayerLeaderboard
         private void Tick(float now)
         {
             long timing = PerformanceDiagnostics.BeginTiming();
-            bool wasActive = PerformanceDiagnostics.IsActive;
-            long allocatedBefore = wasActive ? GC.GetTotalMemory(false) : 0L;
 
             // One status block per tick at most, even when a session event changes several fields.
             StatusBoard.Suspend();
@@ -279,11 +271,14 @@ namespace MultiplayerLeaderboard
             {
                 StatusBoard.Resume();
                 PerformanceDiagnostics.EndUpdate(timing);
-                if (wasActive)
-                {
-                    PerformanceDiagnostics.RecordTickAllocation(GC.GetTotalMemory(false) - allocatedBefore);
-                }
             }
+
+            if (PerformanceDiagnostics.IsActive)
+            {
+                PerformanceDiagnostics.WarmAudioSync(now);
+            }
+
+            LeaderboardLog.FlushIfDue(now);
         }
 
         private void TickCore(float now)
@@ -311,6 +306,8 @@ namespace MultiplayerLeaderboard
                     _mistakes.EndSong();
                     _mistakes = null;
                 }
+
+                ScoreReader.EndSong();
             }
 
             if (_panel != null && !_panel.IsAlive)
@@ -424,6 +421,8 @@ namespace MultiplayerLeaderboard
                     _mistakes = null;
                 }
 
+                ScoreReader.EndSong();
+
                 _loggedSongEntry = false;
                 _loggedStageWait = false;
                 _statusSongActive = false;
@@ -482,7 +481,7 @@ namespace MultiplayerLeaderboard
 
             try
             {
-                MultiplayerSessionManager[] managers = Resources.FindObjectsOfTypeAll<MultiplayerSessionManager>();
+                MultiplayerSessionManager[] managers = SceneObjects.Find<MultiplayerSessionManager>();
                 if (managers == null || managers.Length == 0)
                 {
                     return;
@@ -698,15 +697,7 @@ namespace MultiplayerLeaderboard
                 }
             }
 
-            bool playersManager = false;
-            try
-            {
-                playersManager = _players != null || Resources.FindObjectsOfTypeAll<MultiplayerPlayersManager>().Length > 0;
-            }
-            catch
-            {
-                playersManager = false;
-            }
+            bool playersManager = _players != null;
 
             LeaderboardLog.Info("Multiplayer song detected (scene '" + SafeSceneName() + "'): score sync reports " + synced +
                                 " player(s), session reports " + sessionPlayers + " player(s) (" + (connected ? "connected" : "not connected") +
@@ -797,7 +788,7 @@ namespace MultiplayerLeaderboard
                         "_scoreSyncStateManager", BindingFlags.Instance | BindingFlags.NonPublic);
                 }
 
-                MultiplayerScoreProvider[] providers = Resources.FindObjectsOfTypeAll<MultiplayerScoreProvider>();
+                MultiplayerScoreProvider[] providers = SceneObjects.Find<MultiplayerScoreProvider>();
                 if (_scoreSyncField != null && providers != null)
                 {
                     MultiplayerScoreProvider bestProvider = null;
@@ -859,7 +850,7 @@ namespace MultiplayerLeaderboard
                     return;
                 }
 
-                ScoreSyncStateManager[] managers = Resources.FindObjectsOfTypeAll<ScoreSyncStateManager>();
+                ScoreSyncStateManager[] managers = SceneObjects.Find<ScoreSyncStateManager>();
                 if (managers != null)
                 {
                     ScoreSyncStateManager best = null;
@@ -1116,7 +1107,7 @@ namespace MultiplayerLeaderboard
         {
             try
             {
-                ComboUIController[] combos = Resources.FindObjectsOfTypeAll<ComboUIController>();
+                ComboUIController[] combos = SceneObjects.Find<ComboUIController>();
                 if (combos == null)
                 {
                     return null;
@@ -1187,7 +1178,7 @@ namespace MultiplayerLeaderboard
         {
             try
             {
-                CoreGameHUDController[] huds = Resources.FindObjectsOfTypeAll<CoreGameHUDController>();
+                CoreGameHUDController[] huds = SceneObjects.Find<CoreGameHUDController>();
                 if (huds == null)
                 {
                     return null;
@@ -1360,7 +1351,7 @@ namespace MultiplayerLeaderboard
 
             try
             {
-                ScoreController[] scores = Resources.FindObjectsOfTypeAll<ScoreController>();
+                ScoreController[] scores = SceneObjects.Find<ScoreController>();
                 if (scores == null)
                 {
                     return;
@@ -1784,7 +1775,7 @@ namespace MultiplayerLeaderboard
 
             try
             {
-                MultiplayerPlayersManager[] managers = Resources.FindObjectsOfTypeAll<MultiplayerPlayersManager>();
+                MultiplayerPlayersManager[] managers = SceneObjects.Find<MultiplayerPlayersManager>();
                 if (managers == null)
                 {
                     return;
@@ -1918,14 +1909,19 @@ namespace MultiplayerLeaderboard
                 string spectatorFooter = UpdateSpectatorView(now);
                 long signature = ComputeRenderSignature(_rowBuffer, spectatorFooter);
                 bool rankFlashActive = _panel.HasActiveRankFlash(now);
-                bool rowsReady = _panel.HasAllRows(_rowBuffer.Count);
-                bool changed = _forceRender || signature != _lastRenderSignature || rankFlashActive ||
-                               _rankFlashWasActive || !rowsReady;
+                if (rankFlashActive)
+                {
+                    _rankFlashWasActive = true;
+                }
 
-                // Only the frames that actually apply new text cost a TMP/canvas rebuild. Reading the
-                // scores every 250 ms is cheap; making the panel redraw them is not, so the visible
-                // refresh is throttled independently. Forced updates (panel creation, spectator
-                // re-attach) and rows that still need to be created bypass the gate.
+                bool flashEnded = _rankFlashWasActive && !rankFlashActive;
+                bool rowsReady = _panel.HasAllRows(_rowBuffer.Count);
+                bool changed = _forceRender || signature != _lastRenderSignature || flashEnded || !rowsReady;
+
+                // scores are read every 250 ms. the mesh rebuild is the expensive part, so the
+                // visible refresh stays slower. a rank flash is a solid colour, so it only needs
+                // a render when the rank changes and once more when the flash ends
+                // do score work every 250 ms. 
                 bool refreshDue = now >= _nextUiRefresh || _forceRender || !rowsReady;
                 if (changed && refreshDue)
                 {
@@ -1934,7 +1930,11 @@ namespace MultiplayerLeaderboard
                     PerformanceDiagnostics.EndRender(renderStarted);
                     _lastRenderSignature = signature;
                     _forceRender = false;
-                    _rankFlashWasActive = rankFlashActive;
+                    if (flashEnded)
+                    {
+                        _rankFlashWasActive = false;
+                    }
+
                     _nextUiRefresh = now + (_spectatorAnchor != null
                         ? SpectatorUiRefreshInterval
                         : UiRefreshInterval);
@@ -1948,12 +1948,7 @@ namespace MultiplayerLeaderboard
             LogOrder(_rowBuffer, now);
         }
 
-        /// <summary>
-        /// Cheap change signature for the visible row data and footer. Render still queues only the
-        /// labels that actually differ; this stops the whole panel being walked four times a second
-        /// when the score sync table has not changed. Rank flashes force a render until they expire.
-        /// The hash is not persisted and collisions only delay one visual update until the next tick.
-        /// </summary>
+        // hash of the visible rows. collisions only delay one refresh
         private static long ComputeRenderSignature(List<PlayerRow> rows, string footer)
         {
             unchecked
@@ -3616,7 +3611,7 @@ namespace MultiplayerLeaderboard
             {
                 try
                 {
-                    Camera[] cameras = Resources.FindObjectsOfTypeAll<Camera>();
+                    Camera[] cameras = SceneObjects.Find<Camera>();
                     if (cameras != null)
                     {
                         for (int i = 0; i < cameras.Length; i++)
@@ -3669,7 +3664,7 @@ namespace MultiplayerLeaderboard
                     int count = 0;
                     try
                     {
-                        Camera[] cameras = Resources.FindObjectsOfTypeAll<Camera>();
+                        Camera[] cameras = SceneObjects.Find<Camera>();
                         count = cameras == null ? 0 : cameras.Length;
                     }
                     catch
@@ -3846,6 +3841,8 @@ namespace MultiplayerLeaderboard
                 _mistakes.EndSong();
                 _mistakes = null;
             }
+
+            ScoreReader.EndSong();
             PerformanceDiagnostics.Lifecycle("runtime-destroyed", "update loop and player subscriptions stopped");
 
             if (Instance == this)
